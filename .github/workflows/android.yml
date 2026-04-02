@@ -6,38 +6,32 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      - name: Set up JDK 11
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
+          java-version: '11'
           distribution: 'temurin'
 
       - name: Install Cordova
-        run: npm install -g cordova
+        run: npm install -g cordova@11.1.0
 
       - name: Create and Fix Structure
         run: |
           unzip Frat.zip -d extracted_files
           cordova create myApp com.otmani.prayer PrayerApp
           cd myApp
-          # توزيع الملفات بدقة
           find ../extracted_files -name "config.xml" -exec cp {} . \;
           find ../extracted_files -name "*.html" -exec cp {} ./www/ \;
           find ../extracted_files -name "*.js" -exec cp {} ./www/ \;
           find ../extracted_files -name "*.css" -exec cp {} ./www/ \;
           find ../extracted_files -name "icon.png" -exec cp {} . \; || true
 
-      - name: Build APK with Auto-Fix
+      - name: Force Gradle Fix & Build
         run: |
           cd myApp
-          # استخدام إصدار أندرويد مستقر جداً
-          cordova platform add android@11.0.0
-          # أمر إصلاح المتطلبات تلقائياً
-          npm install
-          cordova build android --debug -- --gradleArg=-Pandroid.useAndroidX=true --gradleArg=-Pandroid.enableJetifier=true
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: Prayer-App-Ready
-          path: myApp/platforms/android/app/build/outputs/apk/debug/app-debug.apk
+          cordova platform add android@10.1.2
+          # إصلاح يدوي لتوافق المكتبات
+          echo "android.useAndroidX=true" >> platforms/android/gradle.properties
+          echo "android.enableJetifier=true" >> platforms/android/gradle.properties
+          # تشغيل البناء
+          cordova build android --debug
