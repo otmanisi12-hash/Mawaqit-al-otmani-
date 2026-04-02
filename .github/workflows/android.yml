@@ -15,28 +15,29 @@ jobs:
       - name: Install Cordova
         run: npm install -g cordova
 
-      - name: Prepare Project Structure
+      - name: Create and Fix Structure
         run: |
           unzip Frat.zip -d extracted_files
-          # إنشاء مجلد المشروع الجديد
           cordova create myApp com.otmani.prayer PrayerApp
           cd myApp
-          # البحث عن ملف config.xml ونقله للمكان الصحيح
+          # توزيع الملفات بدقة
           find ../extracted_files -name "config.xml" -exec cp {} . \;
-          # نقل كل ملفات الويب (html, js, css) إلى مجلد www
           find ../extracted_files -name "*.html" -exec cp {} ./www/ \;
           find ../extracted_files -name "*.js" -exec cp {} ./www/ \;
           find ../extracted_files -name "*.css" -exec cp {} ./www/ \;
           find ../extracted_files -name "icon.png" -exec cp {} . \; || true
 
-      - name: Build APK
+      - name: Build APK with Auto-Fix
         run: |
           cd myApp
-          cordova platform add android@12.0.0
-          cordova build android --debug
+          # استخدام إصدار أندرويد مستقر جداً
+          cordova platform add android@11.0.0
+          # أمر إصلاح المتطلبات تلقائياً
+          npm install
+          cordova build android --debug -- --gradleArg=-Pandroid.useAndroidX=true --gradleArg=-Pandroid.enableJetifier=true
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Prayer-App-Final
+          name: Prayer-App-Ready
           path: myApp/platforms/android/app/build/outputs/apk/debug/app-debug.apk
