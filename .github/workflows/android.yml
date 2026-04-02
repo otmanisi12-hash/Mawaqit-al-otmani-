@@ -6,21 +6,36 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Extract Project
-        run: |
-          unzip Frat.zip -d ./www/
-          # التأكد من وجود index.html في المجلد الرئيسي للـ www
-          SUB_DIR=$(find ./www -name "index.html" -exec dirname {} \;)
-          cp -r $SUB_DIR/. ./www/ || true
-
-      - name: Build Android APK
-        uses: ionichealth/cordova-build-action@v1
+      - name: Set up JDK 11
+        uses: actions/setup-java@v4
         with:
-          platform: android
-          args: --debug
+          java-version: '11'
+          distribution: 'temurin'
+
+      - name: Install Cordova
+        run: npm install -g cordova
+
+      - name: Setup Project Structure
+        run: |
+          unzip Frat.zip -d temp_folder
+          cordova create myApp com.otmani.prayer PrayerApp
+          # نقل ملفاتك إلى الأماكن التي يتوقعها أندرويد
+          find temp_folder -name "config.xml" -exec cp {} myApp/ \;
+          find temp_folder -name "*.html" -exec cp {} myApp/www/ \;
+          find temp_folder -name "*.js" -exec cp {} myApp/www/ \;
+          find temp_folder -name "*.css" -exec cp {} myApp/www/ \;
+          find temp_folder -name "icon.png" -exec cp {} myApp/ \; || true
+
+      - name: Build Android
+        run: |
+          cd myApp
+          cordova platform add android@10.1.2
+          # حل مشكلة الـ Gradle التي ظهرت في الصورة السابقة
+          chmod +x platforms/android/gradlew
+          cordova build android --debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Prayer-App-Final-Success
-          path: platforms/android/app/build/outputs/apk/debug/app-debug.apk
+          name: Prayer-App-V1
+          path: myApp/platforms/android/app/build/outputs/apk/debug/app-debug.apk
