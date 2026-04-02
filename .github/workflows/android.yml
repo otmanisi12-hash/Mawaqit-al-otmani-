@@ -12,11 +12,14 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Unzip and Fix Paths
+      - name: Extract and Fix Project Structure
         run: |
           unzip Frat.zip
-          find . -name "config.xml" -exec mv {} . \;
-          find . -name "www" -type d -exec cp -r {}/. ./www/ \; || true
+          # البحث عن المجلد الذي يحتوي على config.xml والدخول إليه
+          ROOT_DIR=$(find . -name "config.xml" -exec dirname {} \;)
+          echo "Found project root at: $ROOT_DIR"
+          # نقل كل المحتويات من ذلك المجلد إلى المجلد الرئيسي للمصنع
+          cp -r $ROOT_DIR/. . || true
 
       - name: Install Cordova
         run: npm install -g cordova
