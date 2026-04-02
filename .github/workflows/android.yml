@@ -4,27 +4,28 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
       - name: Set up JDK 17
         uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Extract Project Files
-        run: unzip Frat.zip
+      - name: Extract Files
+        run: unzip -o Frat.zip
 
-      - name: Install Cordova
+      - name: Setup Cordova
         run: npm install -g cordova
 
-      - name: Build APK
+      - name: Build Android
         run: |
-          cordova platform add android
+          cordova platform add android@12.0.0
           cordova build android --debug
           
-      - name: Upload APK
+      - name: Save APK
         uses: actions/upload-artifact@v3
         with:
-          name: Prayer-Times-App
+          name: App-Package
           path: platforms/android/app/build/outputs/apk/debug/app-debug.apk
