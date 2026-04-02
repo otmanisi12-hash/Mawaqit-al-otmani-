@@ -12,25 +12,31 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Extract and Move Files
-        run: |
-          unzip Frat.zip
-          # البحث عن مكان ملف config.xml ونقل كل ما بجانبه للمجلد الرئيسي
-          PROJECT_ROOT=$(find . -name "config.xml" -exec dirname {} \;)
-          cp -r $PROJECT_ROOT/. . || true
-
       - name: Install Cordova
         run: npm install -g cordova
 
+      - name: Prepare Project Structure
+        run: |
+          unzip Frat.zip -d extracted_files
+          # إنشاء مجلد المشروع الجديد
+          cordova create myApp com.otmani.prayer PrayerApp
+          cd myApp
+          # البحث عن ملف config.xml ونقله للمكان الصحيح
+          find ../extracted_files -name "config.xml" -exec cp {} . \;
+          # نقل كل ملفات الويب (html, js, css) إلى مجلد www
+          find ../extracted_files -name "*.html" -exec cp {} ./www/ \;
+          find ../extracted_files -name "*.js" -exec cp {} ./www/ \;
+          find ../extracted_files -name "*.css" -exec cp {} ./www/ \;
+          find ../extracted_files -name "icon.png" -exec cp {} . \; || true
+
       - name: Build APK
         run: |
+          cd myApp
           cordova platform add android@12.0.0
-          # إصلاح مشكلة المتطلبات
-          npm install
           cordova build android --debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: My-Prayer-App
-          path: platforms/android/app/build/outputs/apk/debug/app-debug.apk
+          name: Prayer-App-Final
+          path: myApp/platforms/android/app/build/outputs/apk/debug/app-debug.apk
