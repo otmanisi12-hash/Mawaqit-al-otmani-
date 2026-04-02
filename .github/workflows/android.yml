@@ -12,14 +12,12 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Extract and Fix Project Structure
+      - name: Extract and Move Files
         run: |
           unzip Frat.zip
-          # البحث عن المجلد الذي يحتوي على config.xml والدخول إليه
-          ROOT_DIR=$(find . -name "config.xml" -exec dirname {} \;)
-          echo "Found project root at: $ROOT_DIR"
-          # نقل كل المحتويات من ذلك المجلد إلى المجلد الرئيسي للمصنع
-          cp -r $ROOT_DIR/. . || true
+          # البحث عن مكان ملف config.xml ونقل كل ما بجانبه للمجلد الرئيسي
+          PROJECT_ROOT=$(find . -name "config.xml" -exec dirname {} \;)
+          cp -r $PROJECT_ROOT/. . || true
 
       - name: Install Cordova
         run: npm install -g cordova
@@ -27,10 +25,12 @@ jobs:
       - name: Build APK
         run: |
           cordova platform add android@12.0.0
+          # إصلاح مشكلة المتطلبات
+          npm install
           cordova build android --debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Prayer-App-Final
+          name: My-Prayer-App
           path: platforms/android/app/build/outputs/apk/debug/app-debug.apk
