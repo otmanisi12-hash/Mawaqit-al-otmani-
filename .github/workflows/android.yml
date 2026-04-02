@@ -15,23 +15,23 @@ jobs:
       - name: Install Cordova
         run: npm install -g cordova
 
-      - name: Setup Project Structure
+      - name: Setup and Build
         run: |
-          unzip Frat.zip -d temp_folder
-          cordova create myApp com.otmani.prayer PrayerApp
-          # نقل ملفاتك إلى الأماكن التي يتوقعها أندرويد
-          find temp_folder -name "config.xml" -exec cp {} myApp/ \;
-          find temp_folder -name "*.html" -exec cp {} myApp/www/ \;
-          find temp_folder -name "*.js" -exec cp {} myApp/www/ \;
-          find temp_folder -name "*.css" -exec cp {} myApp/www/ \;
-          find temp_folder -name "icon.png" -exec cp {} myApp/ \; || true
-
-      - name: Build Android
-        run: |
+          # 1. إنشاء المشروع
+          cordova create myApp com.otmani.israa "Mawaqit-al-otmani"
           cd myApp
+          
+          # 2. فك ملفاتك مباشرة داخل مجلد www
+          unzip ../Frat.zip -d ./www/
+          
+          # 3. محاولة نقل الملفات من أي مجلد داخلي إلى www الرئيسي
+          SUB_DIR=$(find ./www -name "index.html" -exec dirname {} \;)
+          if [ "$SUB_DIR" != "./www" ]; then
+            cp -r $SUB_DIR/. ./www/
+          fi
+          
+          # 4. بناء الأندرويد (سيقوم Cordova بإنشاء كل شيء تلقائياً)
           cordova platform add android@10.1.2
-          # حل مشكلة الـ Gradle التي ظهرت في الصورة السابقة
-          chmod +x platforms/android/gradlew
           cordova build android --debug
 
       - name: Upload APK
