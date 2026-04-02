@@ -6,32 +6,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up JDK 11
-        uses: actions/setup-java@v4
+      - name: Extract Project
+        run: |
+          unzip Frat.zip -d ./www/
+          # التأكد من وجود index.html في المجلد الرئيسي للـ www
+          SUB_DIR=$(find ./www -name "index.html" -exec dirname {} \;)
+          cp -r $SUB_DIR/. ./www/ || true
+
+      - name: Build Android APK
+        uses: ionichealth/cordova-build-action@v1
         with:
-          java-version: '11'
-          distribution: 'temurin'
+          platform: android
+          args: --debug
 
-      - name: Install Cordova
-        run: npm install -g cordova@11.1.0
-
-      - name: Create and Fix Structure
-        run: |
-          unzip Frat.zip -d extracted_files
-          cordova create myApp com.otmani.prayer PrayerApp
-          cd myApp
-          find ../extracted_files -name "config.xml" -exec cp {} . \;
-          find ../extracted_files -name "*.html" -exec cp {} ./www/ \;
-          find ../extracted_files -name "*.js" -exec cp {} ./www/ \;
-          find ../extracted_files -name "*.css" -exec cp {} ./www/ \;
-          find ../extracted_files -name "icon.png" -exec cp {} . \; || true
-
-      - name: Force Gradle Fix & Build
-        run: |
-          cd myApp
-          cordova platform add android@10.1.2
-          # إصلاح يدوي لتوافق المكتبات
-          echo "android.useAndroidX=true" >> platforms/android/gradle.properties
-          echo "android.enableJetifier=true" >> platforms/android/gradle.properties
-          # تشغيل البناء
-          cordova build android --debug
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Prayer-App-Final-Success
+          path: platforms/android/app/build/outputs/apk/debug/app-debug.apk
